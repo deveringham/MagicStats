@@ -9,7 +9,7 @@ class Card {
 	 * Otherwise, creates an empty card.
 	 */
 	constructor(name) {
-		if (name === undefined) {
+		if ((name === undefined) || (name === "")) {
 			this.name = "";
 	 		this.cmc = -1;
 		}
@@ -43,49 +43,61 @@ class Deck {
 	constructor(name) {
 		this.name = name;
 		this.maxsize = 60;
+		this.maxcopies = 4;
 		this.size = 0;
 		this.decklist = new Map();
 
 		this.addEmptyCard(this.maxsize);
 	}
 
-	/* Function to add cards to a deck */
+	/* Function to add or remove cards from a deck 
+	 * Passing a negative value for n removes cards
+	 */
 	addCard(name, n) {
 		/* Check size */
 		if ((this.size + n) > this.maxsize) {
-			errstr = "Cannot add " + str(n) + " cards because it would increase deck size past maximum of " + str(this.maxsize);
-			throw errstr;
+			var numover = this.size + n - this.maxsize;
+
+			/* If empty cards can be removed, do that */
+			if (this.decklist.get("")[1] >= numover) {
+				this.addCard("", -1 * numover);
+			}
+			n = this.maxsize - this.size;
+		}
+		if ((this.size + n) < 0) {
+			n = -1 * this.size;
 		}
 
 		/* Check if card is already present */
-		if (this.cardlist.has(name)) {
-			var entry = this.cardlist.get(name);
-			entry[2] += n;
-			this.decklist.set("", entry);
+		if (this.decklist.has(name)) {
+			var entry = this.decklist.get(name);
+
+			/* Check number of copies, but not if adding/removing empty cards */
+			if (name != "") {
+				if ((entry[1] + n) > this.maxcopies) {
+					n = this.maxcopies - entry[1];
+				}
+				if ((entry[1] + n) < 0) {
+					n = -1 * entry[1];
+				}
+			}
+
+			/* Update decklist */
+			entry[1] += n;
+			this.decklist.set(name, entry);
+			this.size += n;
 		}
 		else {
-			this.decklist.set("", [new Card(), n]);
+			/* Update decklist */
+			this.decklist.set(name, [new Card(name), n]);
 			this.size += n;
 		}
 	}
 
-	/* Function to add empty cards to a deck */
+	/* Function to add or remove empty cards from a deck 
+	 * Passing a negative value for n removes cards
+	 */
 	addEmptyCard(n) {
-		/* Check size */
-		if ((this.size + n) > this.maxsize) {
-			errstr = "Cannot add " + str(n) + " cards because it would increase deck size past maximum of " + str(this.maxsize);
-			throw errstr;
-		}
-
-		/* Check if card is already present */
-		if (this.cardlist.has("")) {
-			var entry = this.cardlist.get("");
-			entry[2] += n;
-			this.decklist.set("", entry);
-		}
-		else {
-			this.decklist.set("", [new Card(), n]);
-			this.size += n;
-		}
+		this.addCard("",n);
 	}
 }
