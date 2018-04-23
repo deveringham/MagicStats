@@ -1,3 +1,16 @@
+//import {fac} from './Utilities';
+
+/* Utility functions */
+function fac(n) {
+	var fac = 1;
+
+	for (var i = 2; i <= n; i++) {
+		fac = fac * i;
+	}
+
+	return fac;
+}
+
 /* Class Card
  * Dylan Everingham
  * 04/18/2018
@@ -52,17 +65,20 @@ class Deck {
 
 	/* Function to add or remove cards from a deck 
 	 * Passing a negative value for n removes cards
+	 * If there isn't enough room, adds only as many as will fit
+	 * If there are empty cards and we're at maximum deck size,
+	 *	removes empty cards to make room
+	 * Returns number of cards added / removed
 	 */
 	addCard(name, n) {
 		/* Check size */
 		if ((this.size + n) > this.maxsize) {
-			var numover = this.size + n - this.maxsize;
-
 			/* If empty cards can be removed, do that */
-			if (this.decklist.get("")[1] >= numover) {
-				this.addCard("", -1 * numover);
+			var numover = this.size + n - this.maxsize;
+			while((numover > 0) && (this.addCard("", -1))) {
+				numover--;
 			}
-			n = this.maxsize - this.size;
+			n = n - numover;
 		}
 		if ((this.size + n) < 0) {
 			n = -1 * this.size;
@@ -92,6 +108,8 @@ class Deck {
 			this.decklist.set(name, [new Card(name), n]);
 			this.size += n;
 		}
+
+		return n;
 	}
 
 	/* Function to add or remove empty cards from a deck 
@@ -99,5 +117,56 @@ class Deck {
 	 */
 	addEmptyCard(n) {
 		this.addCard("",n);
+	}
+
+	/* Function to calculate probability of drawing a specific card
+	 */
+	probDraw(name, ntargets, ndraws, exact) {
+		name = name || "";
+		ntargets = ntargets || 1;
+		ndraws = ndraws || 1;
+		exact = exact || 1;
+
+		var size = this.size;
+		var ncards = this.decklist.get(name)[1];
+
+		return this.probDrawHelper(name, size, ncards, ntargets, ndraws, exact);
+	}
+	probDrawHelper(name, size, ncards, ntargets, ndraws, exact) {
+		name = name || "";
+		size = size || this.size;
+		ncards = ncards || this.decklist.get(name)[1];
+		ntargets = ntargets || 1;
+		ndraws = ndraws || 1;
+		exact = exact || 1;	
+
+		if (exact) {
+			var bincoeff = fac(ndraws) / (fac(ntargets) * fac(ndraws - ntargets));
+			var top  = fac(ncards) * fac(size - ncards) * fac(size - ndraws);
+			var bot = fac(ncards - ntargets) * fac(size - ncards + ndraws - ntargets) * fac(size);
+			var prob = bincoeff * top / bot;
+		}
+		else {
+			var prob = 0;
+			for (var i = 1; i <= ntargets; i++) {
+				prob += this.probDrawHelper(name, size, ncards, i, ndraws, 1);
+			}
+		}
+
+		return prob;
+	}
+	probDrawMultiple(name, size, ncards, ntargets, ndraws, exact) {
+		name = name || [""];
+		size = size || this.size;
+		ncards = ncards || [this.decklist.get(name)[1]];
+		ntargets = ntargets || [1];
+		ndraws = ndraws || 1;
+		exact = exact || [1];
+
+		/* Make sure list arguments have the same length */
+		if (name.length != ncards.length != ntargets.length != exact.length) {
+			throw "List parameters (name, ncards, ntargets and exact) must have same length";
+		}
+		
 	}
 }

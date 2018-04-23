@@ -7,10 +7,10 @@
 	<script src="StatsTypes.js"></script>
 	<script>
 		d = new Deck();
-		d.addCard("", -4);
-		d.addCard('Young Pyromancer', 2);
-		console.log(d.decklist.get("")[1]);
-		console.log(d.decklist.get("Young Pyromancer")[1]);
+		d.addCard('Young Pyromancer', 4);
+		console.log(d.decklist.get('')[1]);
+		console.log(d.decklist.get('Young Pyromancer')[1]);
+		console.log(d.probDraw('Young Pyromancer', 1, 1, 1));
 	</script>
 <body>
 
